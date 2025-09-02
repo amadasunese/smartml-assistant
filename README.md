@@ -47,5 +47,5 @@ Business users seeking no-code predictive analytics.
  Expand visualization dashboards.
  Multi-user accounts and authentication.
 
-🤝 Contributing
+### 🤝 Contributing
 Contributions are welcome! Please fork the repo and submit a pull request with your improvements.
