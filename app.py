@@ -1,8 +1,8 @@
 # flask_agent.py
-from flask import Flask, render_template
+from flask import Flask
 import importlib
 import pkgutil
-from routes.views import bp # this is your routes package
+from routes.views import bp
 
 def create_app():
     app = Flask(__name__)

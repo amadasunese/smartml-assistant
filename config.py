@@ -1,4 +1,6 @@
 import os
+
+
 APP_DIR = os.path.dirname(__file__)
 MODELS_DIR = os.path.join(APP_DIR, "saved_models")
 DATA_DIR = os.path.join(APP_DIR, "uploaded_data")
