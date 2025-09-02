@@ -10,15 +10,15 @@ SmartML Assistant is a web application that empowers data analysts and data scie
 🔍 AI Insights – Interact with trained models to make predictions and derive actionable insights.
 ⚡ No-Code Experience – Perform end-to-end AI tasks without manual programming.
 
-🚀 Features
-Dataset Management: Upload and manage CSV datasets.
-Preprocessing Tools: Clean, transform, and prepare data automatically.
-Model Training: Choose algorithms, configure parameters, and train ML models.
-Evaluation Metrics: View performance results including accuracy, precision, recall, and more.
-Model Interaction: Run predictions directly from the web interface.
-User-Friendly Interface: Designed for both technical and non-technical users.
+### 🚀 Features
+1. Dataset Management: Upload and manage CSV datasets.
+2. Preprocessing Tools: Clean, transform, and prepare data automatically.
+3. Model Training: Choose algorithms, configure parameters, and train ML models.
+4. Evaluation Metrics: View performance results including accuracy, precision, recall, and more.
+5. Model Interaction: Run predictions directly from the web interface.
+6. User-Friendly Interface: Designed for both technical and non-technical users.
 
-🛠️ Tech Stack
+### 🛠️ Tech Stack
 
 Backend: Flask (Python)
 Frontend: HTML, CSS, JavaScript (Jinja templates)
