@@ -1,0 +1,274 @@
+<div class="module-card" id="preprocess">
+  <div class="module-header">
+    <p class="module-header-title">
+      <span class="module-number">3</span>
+      Data Preprocessing
+    </p>
+    <div class="action-buttons">
+      <button class="button is-outlined is-light" onclick="resetModule('preprocess')">
+        <span class="icon is-small"><i class="fas fa-redo"></i></span>
+        <span>Reset</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="module-content">
+    <p class="module-description">Clean and prepare your data for machine learning by configuring the preprocessing steps below.</p>
+    
+    <!-- Data Selection Section -->
+    <div class="config-section">
+      <h3 class="config-section-title">Data Selection</h3>
+      <div class="columns">
+        <div class="column is-6">
+          <div class="field">
+            <label class="label">Select Dataset</label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select id="preprocessDatasetSelector" name="dataset_name">
+                  <option value="">Select a dataset</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Column Management Section -->
+    <div class="config-section">
+      <h3 class="config-section-title">Column Management</h3>
+      <div class="field">
+        <label class="label">Columns to Exclude</label>
+        <div class="control">
+          <div id="dropColumnsContainer" class="tags">
+            <span class="tag is-light">Select a dataset to view columns</span>
+          </div>
+          <p class="help">Click on column names to exclude them from processing</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Missing Values Section -->
+    <div class="config-section">
+      <h3 class="config-section-title">Missing Values Handling</h3>
+      <div class="columns">
+        <div class="column is-5">
+          <div class="field">
+            <label class="label">Strategy</label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select name="missing_strategy">
+                  <option value="none">Do nothing</option>
+                  <option value="mean">Mean Imputation</option>
+                  <option value="median">Median Imputation</option>
+                  <option value="most_frequent">Most Frequent</option>
+                  <option value="drop">Drop Rows with Missing Values</option>
+                  <option value="interpolate">Interpolation</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="column is-4">
+          <div class="field">
+            <label class="label">Additional Options</label>
+            <div class="control">
+              <label class="checkbox">
+                <input type="checkbox" name="missing_indicator">
+                Add missing value indicators
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Outlier Handling Section -->
+    <div class="config-section">
+      <h3 class="config-section-title">Outlier Handling</h3>
+      <div class="columns">
+        <div class="column is-4">
+          <div class="field">
+            <label class="label">Method</label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select name="outlier_method">
+                  <option value="none">Do nothing</option>
+                  <option value="clip">Clipping</option>
+                  <option value="remove">Remove Outliers</option>
+                  <option value="transform">Transform Values</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="column is-4">
+          <div class="field">
+            <label class="label">Detection Method</label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select name="outlier_detection">
+                  <option value="none">None</option>
+                  <option value="iqr">IQR (Interquartile Range)</option>
+                  <option value="zscore">Z-Score</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="column is-4">
+          <div class="field">
+            <label class="label">Transformation</label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select name="outlier_transform_method">
+                  <option value="none">None</option>
+                  <option value="log">Log Transform</option>
+                  <option value="sqrt">Square Root</option>
+                  <option value="boxcox">Box-Cox Transform</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Encoding & Scaling Section -->
+    <div class="config-section">
+      <h3 class="config-section-title">Encoding & Scaling</h3>
+      <div class="columns">
+        <div class="column is-6">
+          <div class="field">
+            <label class="label">Categorical Encoding</label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select name="encoding_method">
+                  <option value="none">No encoding</option>
+                  <option value="onehot">One-Hot Encoding</option>
+                  <option value="label">Label Encoding</option>
+                  <option value="ordinal">Ordinal Encoding</option>
+                  <option value="target">Target Encoding</option>
+                  <option value="frequency">Frequency Encoding</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="column is-6">
+          <div class="field">
+            <label class="label">Feature Scaling</label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select name="scaler">
+                  <option value="none">No scaling</option>
+                  <option value="standard">Standard Scaler</option>
+                  <option value="minmax">Min-Max Scaler</option>
+                  <option value="robust">Robust Scaler</option>
+                  <option value="normalize">Normalization</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Class Imbalance Section -->
+    <div class="config-section">
+      <h3 class="config-section-title">Class Imbalance Handling</h3>
+      <div class="columns">
+        <div class="column is-6">
+          <div class="field">
+            <label class="label">Method</label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select name="imbalance_method">
+                  <option value="none">Do nothing</option>
+                  <option value="smote">SMOTE (Synthetic Minority Oversampling)</option>
+                  <option value="undersample">Random Undersampling</option>
+                  <option value="oversample">Random Oversampling</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="field is-grouped action-buttons-group">
+      <div class="control">
+        <button class="button is-info" type="submit" id="preprocessButton">
+          <span class="icon"><i class="fas fa-broom"></i></span>
+          <span>Preprocess Data</span>
+        </button>
+      </div>
+      <div class="control">
+        <button class="button is-light" type="button" onclick="resetModule('preprocess')">
+          <span class="icon"><i class="fas fa-times"></i></span>
+          <span>Cancel</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="result-container" id="preprocessResult"></div>
+  </div>
+</div>
+
+<style>
+.config-section {
+  margin-bottom: 2rem;
+  padding: 1.25rem;
+  border-radius: 6px;
+  background-color: #f8f9fa;
+  border-left: 4px solid #3273dc;
+}
+
+.config-section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #363636;
+}
+
+.module-description {
+  margin-bottom: 1.5rem;
+  color: #4a4a4a;
+}
+
+.action-buttons-group {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #dbdbdb;
+}
+
+.tags {
+  min-height: 2.5em;
+  padding: 0.5em;
+  border: 1px solid #dbdbdb;
+  border-radius: 4px;
+  background-color: white;
+}
+
+.tag {
+  margin: 0.2em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tag.is-light {
+  background-color: #f5f5f5;
+  color: #7a7a7a;
+}
+
+.tag.is-excluded {
+  background-color: #ffdd57;
+  color: #3e3e3e;
+}
+
+.label {
+  font-weight: 500;
+}
+</style>

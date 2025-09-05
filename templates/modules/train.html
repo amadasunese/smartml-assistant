@@ -1,0 +1,111 @@
+<div class="module-card" id="train">
+    <div class="module-header">
+      <p class="module-header-title">
+        <span class="module-number">5</span>
+        Model Training
+      </p>
+      <div class="action-buttons">
+        <button class="button is-outlined is-light" onclick="resetModule('train')">
+          <span class="icon is-small"><i class="fas fa-redo"></i></span>
+          <span>Clear</span>
+        </button>
+      </div>
+    </div>
+    <div class="module-content">
+      <p>Train a machine learning model on your preprocessed dataset.</p>
+      
+      <div class="form-row">
+        <div class="form-field">
+          <label class="label">Select Dataset</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select id="trainDatasetSelector" onchange="updateTargetColumnOptions()">
+                <option value="">Select a dataset</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-field">
+          <label class="label">Select Target Column</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select id="targetColumnSelector" name="target">
+                <option value="">Select target column</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-field">
+          <label class="label">Algorithm</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select name="algorithm">
+                <option value="logistic_regression">Logistic Regression</option>
+                <option value="random_forest">Random Forest</option>
+                <option value="xgboost">XGBoost</option>
+                <option value="svm">Support Vector Machine</option>
+                <option value="decision_tree">Decision Tree</option>
+                <option value="knn">K-Nearest Neighbors</option>
+                <option value="neural_network">Neural Network</option>
+              </select>
+            </div>
+          </div>
+        </div>
+  
+        <div class="form-field">
+          <label class="label">Test Size</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select name="test_size">
+                <option value="0.2">20%</option>
+                <option value="0.25">25%</option>
+                <option value="0.3">30%</option>
+                <option value="0.15">15%</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-field">
+          <label class="label">Cross-Validation</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select name="cross_validation">
+                <option value="none">No Cross-Validation</option>
+                <option value="5">5-Fold</option>
+                <option value="10">10-Fold</option>
+                <option value="stratified">Stratified K-Fold</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-field">
+          <label class="label">Hyperparameter Tuning</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select name="hyperparameter_tuning">
+                <option value="none">No Tuning</option>
+                <option value="grid">Grid Search</option>
+                <option value="random">Random Search</option>
+                <option value="bayesian">Bayesian Optimization</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <button class="button is-success" type="submit" id="trainButton">
+        <span class="icon"><i class="fas fa-graduation-cap"></i></span>
+        <span>Train Model</span>
+      </button>
+      
+      <div class="result-container" id="trainResult"></div>
+    </div>
+  </div>

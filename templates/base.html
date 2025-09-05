@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Data Science Workbench | Flask AI Agent{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <button class="mobile-menu-button" id="mobileMenuButton" style="display: none;">
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <h2><i class="fas fa-brain"></i> <span>Data Science Workbench</span></h2>
+    </div>
+    
+    <ul class="sidebar-menu">
+      <li><a href="#upload"><i class="fas fa-folder-open"></i> Datasets <span id="dataset-count" class="badge">(0)</span></a></li>
+      <li><a href="#saved_models"><i class="fas fa-database"></i> Models <span id="model-count" class="badge">(0)</span></a></li>
+      <li><a href="#" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
+      <li><a href="#upload"><i class="fas fa-upload"></i> Data Upload</a></li>
+      <li><a href="#eda"><i class="fas fa-chart-bar"></i> EDA</a></li>
+      <li><a href="#preprocess"><i class="fas fa-cogs"></i> Preprocessing</a></li>
+      <li><a href="#feature-engineering"><i class="fas fa-wrench"></i> Feature Engineering</a></li>
+      <li><a href="#train"><i class="fas fa-robot"></i> Model Training</a></li>
+      <li><a href="#evaluate"><i class="fas fa-chart-line"></i> Model Evaluation</a></li>
+      <li><a href="#predict"><i class="fas fa-magic"></i> Prediction</a></li>
+      <li><a href="#deploy"><i class="fas fa-rocket"></i> Deployment</a></li>
+      <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
+      <li><a href="#"><i class="fas fa-question-circle"></i> Help</a></li>
+    </ul>
+  </aside>
+
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

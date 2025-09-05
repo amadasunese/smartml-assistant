@@ -304,3 +304,27 @@
       box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     }
   }
+
+
+/* Custom CSS to handle the button positioning in the header */
+.module-header {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .module-header .level {
+    width: 100%;
+  }
+  
+  .module-header .level-right {
+    margin-left: auto; /* Pushes the button to the far right */
+  }
+  
+  /* Position the module icon */
+  .module-header > .icon {
+    position: absolute;
+    right: 1.5rem;
+    top: 1.5rem;
+  }

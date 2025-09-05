@@ -1,18 +1,33 @@
 # views.py - Fix imports
-from flask import Blueprint, jsonify, request, render_template
+from flask import Blueprint, jsonify, request, render_template, send_file
 from services.data_services import load_dataset, save_uploaded_file, UPLOAD_FOLDER
 from services.model_services import list_models, load_model, save_model
 from services.preprocess_services import preprocess_pipeline
-from services.train_services import train_model
-import pandas as pd
+from services.train_services import train_model, get_dataset_columns
+from services.feature_engineering_service import apply_feature_engineering
+
+
 import uuid
 import os
 import logging
 logging.basicConfig(level=logging.DEBUG)
 # from services.data_services import load_dataset, save_uploaded_file, list_models, load_model, preprocess_pipeline, train_model
-
-
+import scipy.stats as stats
+import logging
+from flask import jsonify, request
 import pandas as pd
+import numpy as np
+
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+import io
+import base64
+from io import StringIO  # Import StringIO
+from services.evaluate_services import evaluate_model
+
+
+
 
 bp = Blueprint("main", __name__)
 
@@ -59,6 +74,9 @@ def dataset_summary(dataset_name):
         return jsonify({"error": f"Error processing data: {str(e)}"}), 500
 
 
+
+
+
 # @bp.route("/eda/<analysis_type>/<dataset_name>", methods=["GET"])
 # def perform_eda(analysis_type, dataset_name):
 #     logging.debug(f"EDA requested for dataset: {dataset_name}, type: {analysis_type}")
@@ -71,58 +89,218 @@ def dataset_summary(dataset_name):
 
 #     try:
 #         if analysis_type == 'summary':
-#             head_data = df.head(5).replace({float('nan'): None}).to_dict(orient="records")
-#             describe_data = df.describe(include="all").replace({float('nan'): None}).to_dict()
+#             head_data = df.head(5).replace({np.nan: None}).to_dict(orient="records")
+#             describe_data = df.describe(include="all").replace({np.nan: None}).to_dict()
 #             return jsonify({
 #                 "shape": df.shape,
 #                 "columns": df.columns.tolist(),
 #                 "head": head_data,
 #                 "describe": describe_data
 #             })
+
 #         elif analysis_type == 'correlation':
-#             corr_matrix = df.corr(numeric_only=True).replace({float('nan'): None}).values.tolist()
+#             numeric_df = df.select_dtypes(include=np.number)
+#             corr_matrix = numeric_df.corr().replace({np.nan: None}).values.tolist()
 #             return jsonify({
-#                 "columns": df.columns[df.select_dtypes(include=np.number).columns].tolist(),
+#                 "columns": numeric_df.columns.tolist(),
 #                 "correlation": corr_matrix
 #             })
+
 #         elif analysis_type == 'distribution':
-#             import scipy.stats as stats
 #             distribution_data = {}
 #             for col in df.columns:
 #                 if pd.api.types.is_numeric_dtype(df[col]):
-#                     distribution_data[col] = {
-#                         "skewness": df[col].skew(),
-#                         "kurtosis": df[col].kurtosis(),
-#                         "normality": stats.shapiro(df[col].dropna())[1] # p-value from Shapiro-Wilk test
-#                     }
+#                     dropna_series = df[col].dropna()
+#                     if len(dropna_series) > 1:
+#                         distribution_data[col] = {
+#                             "skewness": float(dropna_series.skew()),
+#                             "kurtosis": float(dropna_series.kurtosis()),
+#                             "normality": float(stats.shapiro(dropna_series)[1])
+#                         }
+#                     else:
+#                         distribution_data[col] = {
+#                             "skewness": None,
+#                             "kurtosis": None,
+#                             "normality": None
+#                         }
 #             return jsonify({
 #                 "columns": df.columns.tolist(),
 #                 "distribution": distribution_data
 #             })
+
 #         elif analysis_type == 'missing':
 #             missing_data = {}
+#             total_rows = len(df)
 #             for col in df.columns:
-#                 missing_count = df[col].isnull().sum()
-#                 total_count = len(df[col])
+#                 missing_count = int(df[col].isnull().sum())
 #                 missing_data[col] = {
 #                     "count": missing_count,
-#                     "percentage": (missing_count / total_count) * 100
+#                     "percentage": (missing_count / total_rows) * 100
 #                 }
 #             return jsonify({
 #                 "columns": df.columns.tolist(),
 #                 "missing": missing_data
 #             })
+        
 #         else:
 #             return jsonify({"error": "Invalid analysis type"}), 400
+
 #     except Exception as e:
 #         logging.error(f"Error processing data for {analysis_type}: {str(e)}")
 #         return jsonify({"error": f"Error processing data: {str(e)}"}), 500
 
-import scipy.stats as stats
-import logging
-from flask import jsonify, request
-import pandas as pd
-import numpy as np
+
+
+# bp = Blueprint("main", __name__)
+
+# DATA_DIR = "datasets"
+
+# def load_dataset(dataset_name):
+#     """Loads a dataset from the specified directory."""
+#     file_path = os.path.join(DATA_DIR, dataset_name)
+#     if not os.path.exists(file_path):
+#         raise FileNotFoundError(f"File not found: {file_path}")
+
+#     # Handle different file types
+#     if file_path.endswith('.csv'):
+#         return pd.read_csv(file_path)
+#     elif file_path.endswith(('.xls', '.xlsx')):
+#         return pd.read_excel(file_path)
+#     elif file_path.endswith('.json'):
+#         return pd.read_json(file_path)
+#     else:
+#         raise ValueError("Unsupported file type")
+
+# @bp.route("/eda/<analysis_type>/<dataset_name>", methods=["GET"])
+# def perform_eda(analysis_type, dataset_name):
+#     logging.debug(f"EDA requested for dataset: {dataset_name}, type: {analysis_type}")
+#     try:
+#         df = load_dataset(dataset_name)
+#     except FileNotFoundError:
+#         return jsonify({"error": f"Dataset '{dataset_name}' not found"}), 404
+#     except Exception as e:
+#         return jsonify({"error": f"Error loading dataset: {str(e)}"}), 500
+
+#     try:
+#         if analysis_type == 'summary':
+#             # Capture the output of df.info()
+#             buf = StringIO()
+#             df.info(buf=buf)
+#             info_text = buf.getvalue()
+
+#             head_data = df.head(5).replace({np.nan: None}).to_dict(orient="records")
+#             describe_data = df.describe(include="all").replace({np.nan: None}).to_dict()
+#             return jsonify({
+#                 "shape": df.shape,
+#                 "columns": df.columns.tolist(),
+#                 "head": head_data,
+#                 "describe": describe_data,
+#                 "info": info_text  # Include the captured info() output
+#             })
+
+#         elif analysis_type == 'correlation':
+#             numeric_df = df.select_dtypes(include=np.number)
+#             if numeric_df.empty:
+#                 return jsonify({"error": "No numeric columns for correlation analysis."}), 400
+#             corr_matrix = numeric_df.corr().replace({np.nan: None}).values.tolist()
+#             return jsonify({
+#                 "columns": numeric_df.columns.tolist(),
+#                 "correlation": corr_matrix
+#             })
+
+#         elif analysis_type == 'distribution':
+#             distribution_data = {}
+#             for col in df.columns:
+#                 if pd.api.types.is_numeric_dtype(df[col]):
+#                     dropna_series = df[col].dropna()
+#                     if len(dropna_series) > 1:
+#                         distribution_data[col] = {
+#                             "skewness": float(dropna_series.skew()),
+#                             "kurtosis": float(dropna_series.kurtosis()),
+#                             "normality": float(stats.shapiro(dropna_series)[1])
+#                         }
+#                     else:
+#                         distribution_data[col] = {
+#                             "skewness": None,
+#                             "kurtosis": None,
+#                             "normality": None
+#                         }
+#             return jsonify({
+#                 "columns": df.columns.tolist(),
+#                 "distribution": distribution_data
+#             })
+
+#         elif analysis_type == 'missing':
+#             missing_data = {}
+#             total_rows = len(df)
+#             for col in df.columns:
+#                 missing_count = int(df[col].isnull().sum())
+#                 missing_data[col] = {
+#                     "count": missing_count,
+#                     "percentage": (missing_count / total_rows) * 100
+#                 }
+#             return jsonify({
+#                 "columns": df.columns.tolist(),
+#                 "missing": missing_data
+#             })
+            
+#         # New EDA analysis for categorical variables
+#         elif analysis_type == 'categorical':
+#             categorical_data = {}
+#             for col in df.columns:
+#                 if not pd.api.types.is_numeric_dtype(df[col]):
+#                     categorical_data[col] = df[col].value_counts().to_dict()
+#             return jsonify({
+#                 "columns": df.columns.tolist(),
+#                 "categorical_counts": categorical_data
+#             })
+            
+#         # New EDA analysis for outlier detection
+#         elif analysis_type == 'outliers':
+#             outlier_data = {}
+#             for col in df.columns:
+#                 if pd.api.types.is_numeric_dtype(df[col]):
+#                     Q1 = df[col].quantile(0.25)
+#                     Q3 = df[col].quantile(0.75)
+#                     IQR = Q3 - Q1
+#                     lower_bound = Q1 - 1.5 * IQR
+#                     upper_bound = Q3 + 1.5 * IQR
+                    
+#                     outliers = df[(df[col] < lower_bound) | (df[col] > upper_bound)][col]
+#                     outlier_data[col] = {
+#                         "count": int(outliers.count()),
+#                         "percentage": float((outliers.count() / len(df)) * 100)
+#                     }
+#             return jsonify({
+#                 "columns": df.columns.tolist(),
+#                 "outliers": outlier_data
+#             })
+            
+#         # New EDA analysis for Bivariate plots (Pair Plot)
+#         elif analysis_type == 'pairplot':
+#             numeric_df = df.select_dtypes(include=np.number)
+#             if numeric_df.empty:
+#                 return jsonify({"error": "No numeric columns for pairplot"}), 400
+                
+#             fig = sns.pairplot(numeric_df).fig
+            
+#             buf = io.BytesIO()
+#             fig.savefig(buf, format='png')
+#             buf.seek(0)
+            
+#             img_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+            
+#             plt.close(fig)
+            
+#             return jsonify({"image": f"data:image/png;base64,{img_base64}"})
+
+#         else:
+#             return jsonify({"error": "Invalid analysis type"}), 400
+
+#     except Exception as e:
+#         logging.error(f"Error processing data for {analysis_type}: {str(e)}")
+#         return jsonify({"error": f"Error processing data: {str(e)}"}), 500
+
 
 @bp.route("/eda/<analysis_type>/<dataset_name>", methods=["GET"])
 def perform_eda(analysis_type, dataset_name):
@@ -136,17 +314,25 @@ def perform_eda(analysis_type, dataset_name):
 
     try:
         if analysis_type == 'summary':
+            # Capture the output of df.info()
+            buf = StringIO()
+            df.info(buf=buf)
+            info_text = buf.getvalue()
+
             head_data = df.head(5).replace({np.nan: None}).to_dict(orient="records")
             describe_data = df.describe(include="all").replace({np.nan: None}).to_dict()
             return jsonify({
                 "shape": df.shape,
                 "columns": df.columns.tolist(),
                 "head": head_data,
-                "describe": describe_data
+                "describe": describe_data,
+                "info": info_text
             })
 
         elif analysis_type == 'correlation':
             numeric_df = df.select_dtypes(include=np.number)
+            if numeric_df.empty:
+                return jsonify({"error": "No numeric columns for correlation analysis."}), 400
             corr_matrix = numeric_df.corr().replace({np.nan: None}).values.tolist()
             return jsonify({
                 "columns": numeric_df.columns.tolist(),
@@ -188,14 +374,90 @@ def perform_eda(analysis_type, dataset_name):
                 "columns": df.columns.tolist(),
                 "missing": missing_data
             })
-        
+            
+        elif analysis_type == 'categorical':
+            categorical_data = {}
+            for col in df.columns:
+                if not pd.api.types.is_numeric_dtype(df[col]):
+                    categorical_data[col] = df[col].value_counts().to_dict()
+            return jsonify({
+                "columns": df.columns.tolist(),
+                "categorical_counts": categorical_data
+            })
+            
+        elif analysis_type == 'outliers':
+            outlier_data = {}
+            for col in df.columns:
+                if pd.api.types.is_numeric_dtype(df[col]):
+                    Q1 = df[col].quantile(0.25)
+                    Q3 = df[col].quantile(0.75)
+                    IQR = Q3 - Q1
+                    lower_bound = Q1 - 1.5 * IQR
+                    upper_bound = Q3 + 1.5 * IQR
+                    
+                    outliers = df[(df[col] < lower_bound) | (df[col] > upper_bound)][col]
+                    outlier_data[col] = {
+                        "count": int(outliers.count()),
+                        "percentage": float((outliers.count() / len(df)) * 100)
+                    }
+            return jsonify({
+                "columns": df.columns.tolist(),
+                "outliers": outlier_data
+            })
+            
+        # elif analysis_type == 'pairplot':
+        #     # Check for pandas version to avoid deprecated option issue
+        #     if pd.__version__ >= '2.0.0':
+        #         # No specific setting needed, pandas >= 2.0 handles this automatically
+        #         pass
+            
+        #     numeric_df = df.select_dtypes(include=np.number)
+        #     if numeric_df.empty:
+        #         return jsonify({"error": "No numeric columns for pairplot"}), 400
+                
+        #     fig = sns.pairplot(numeric_df).figure
+            
+        #     buf = io.BytesIO()
+        #     fig.savefig(buf, format='png')
+        #     buf.seek(0)
+            
+        #     img_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+            
+        #     plt.close(fig)  # Crucial to close the plot after saving
+            
+        #     return jsonify({"image": f"data:image/png;base64,{img_base64}"})
+
+        elif analysis_type == 'pairplot':
+            # Check for pandas version to avoid deprecated option issue
+            if pd.__version__ >= '2.0.0':
+                # No specific setting needed, pandas >= 2.0 handles this automatically
+                pass
+
+            numeric_df = df.select_dtypes(include=np.number)
+            if numeric_df.empty:
+                return jsonify({"error": "No numeric columns for pairplot"}), 400
+
+            # Create pairplot
+            g = sns.pairplot(numeric_df)
+            g.figure.tight_layout()  # fixes "title not moved" warnings
+
+            # Save to buffer
+            buf = io.BytesIO()
+            g.figure.savefig(buf, format='png', bbox_inches='tight')  # bbox ensures content fits
+            buf.seek(0)
+
+            img_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+
+            plt.close(g.figure)  # Close the figure to free memory
+
+            return jsonify({"image": f"data:image/png;base64,{img_base64}"})
+
         else:
             return jsonify({"error": "Invalid analysis type"}), 400
 
     except Exception as e:
         logging.error(f"Error processing data for {analysis_type}: {str(e)}")
         return jsonify({"error": f"Error processing data: {str(e)}"}), 500
-
 
 # views.py - Add this function
 @bp.route("/datasets", methods=["GET"])
@@ -220,16 +482,164 @@ def preprocess(dataset_name):
     processed_name = preprocess_pipeline(dataset_name, config)
     return jsonify({"message": "Dataset preprocessed", "processed_name": processed_name})
 
+
+@bp.route("/feature-engineering/<dataset_name>", methods=["POST"])
+def feature_engineering(dataset_name):
+    try:
+        form_data = request.get_json()
+        feature_generation = form_data.get("feature_generation", "none")
+        feature_selection = form_data.get("feature_selection", "none")
+        dimensionality_reduction = form_data.get("dimensionality_reduction", "none")
+
+        result = apply_feature_engineering(
+            dataset_name,
+            feature_generation,
+            feature_selection,
+            dimensionality_reduction
+        )
+
+        return jsonify(result)
+
+    except FileNotFoundError as fnf:
+        return jsonify({"error": str(fnf)}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+
 @bp.route("/train/<dataset_name>", methods=["POST"])
 def train(dataset_name):
     config = request.json or {}
     model_id, metrics = train_model(dataset_name, config)
     return jsonify({"model_id": model_id, "metrics": metrics})
 
+
+@bp.route("/dataset/columns/<dataset_name>", methods=["GET"])
+def dataset_columns(dataset_name):
+    try:
+        columns = get_dataset_columns(dataset_name)
+        return jsonify({"columns": columns})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 404
+
+
+@bp.route("/get-columns/<dataset_name>", methods=["GET"])
+def get_columns(dataset_name):
+    columns = get_dataset_columns(dataset_name)
+    if columns:
+        return jsonify(columns)
+    else:
+        return jsonify({"error": "Dataset not found"}), 404
+
+
+
+
+@bp.route("/evaluate/<model_id>", methods=["POST"])
+def evaluate(model_id):
+    try:
+        data = request.get_json()
+        print("📥 Incoming request:", data)  # <--- DEBUG
+        dataset_name = data.get("dataset")
+        target_column = data.get("target")
+        metrics = data.get("metrics", [])
+        visualization = data.get("visualization", "none")
+
+        if not dataset_name or not target_column:
+            print("❌ Missing values:", dataset_name, target_column)  # <--- DEBUG
+            return jsonify({"error": "Dataset and target column are required"}), 400
+
+        results = evaluate_model(model_id, dataset_name, target_column, metrics, visualization)
+        return jsonify(results)
+
+    except Exception as e:
+        print("🔥 Server error in /evaluate:", str(e))  # <--- DEBUG
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+# A simplified Flask route example
+from flask import abort
+import joblib
+from services.model_services import MODEL_DIR
+
+
+
+def load_model_features(model_id):
+    """
+    Loads a model and returns its feature names.
+    """
+    # Support both joblib and pickle files
+    joblib_path = os.path.join(MODEL_DIR, f"{model_id}.joblib")
+    pickle_path = os.path.join(MODEL_DIR, f"{model_id}.pkl")
+
+    model_path = None
+    if os.path.exists(joblib_path):
+        model_path = joblib_path
+    elif os.path.exists(pickle_path):
+        model_path = pickle_path
+
+    if not model_path:
+        return None
+
+    try:
+        model = joblib.load(model_path)
+        if hasattr(model, 'feature_names_in_'):
+            return model.feature_names_in_.tolist()
+        else:
+            return ["feature_1", "feature_2", "feature_3"]
+    except Exception as e:
+        print(f"Error loading model {model_id}: {e}")
+        return None
+
+
+@bp.route("/model/features/<model_id>", methods=["GET"])
+def get_model_features(model_id):
+    """
+    Backend route to get a trained model's feature names.
+    """
+    features = load_model_features(model_id)
+
+    if features:
+        # Return the feature list in a JSON object
+        return jsonify({"features": features})
+    else:
+        # This will prevent the SyntaxError on the frontend
+        return abort(404, "Model or features not found.")
+    
+
 @bp.route("/predict/<model_id>", methods=["POST"])
 def predict(model_id):
     model = load_model(model_id)
-    data = request.json.get("data")
-    df = pd.DataFrame([data])
-    preds = model.predict(df).tolist()
-    return jsonify({"predictions": preds})
+    input_data = request.json.get("input_data", {})
+
+    df = pd.DataFrame([input_data], columns=model.feature_names)
+    preds = model.predict(df)
+
+    return jsonify({"prediction": preds.tolist()})
+
+
+@bp.route('/api/download-model/<model_id>')
+def download_model(model_id):
+    """
+    A Flask route to download a specific model.
+    The model_id is captured from the URL path.
+    """
+    # Construct the file path for the requested model
+    model_path = os.path.join(MODEL_DIR, f"{model_id}.pkl")
+    
+    try:
+        # Check if the file exists and is a file (not a directory)
+        if not os.path.isfile(model_path):
+            return jsonify({'error': 'Model not found'}), 404
+            
+
+        return send_file(model_path, as_attachment=True, download_name=f'{model_id}.pkl')
+        
+    except FileNotFoundError:
+        # This block is for handling errors if the file is not found
+        return jsonify({'error': 'Model not found'}), 404
+        
+    except Exception as e:
+        # Catch any other potential exceptions and return a server error
+        return jsonify({'error': str(e)}), 500
+     

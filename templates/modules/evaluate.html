@@ -1,0 +1,93 @@
+<div class="module-card" id="evaluate">
+    <div class="module-header">
+      <p class="module-header-title">
+        <span class="module-number">6</span>
+        Model Evaluation
+      </p>
+      <div class="action-buttons">
+        <button class="button is-outlined is-light" onclick="resetModule('evaluate')">
+          <span class="icon is-small"><i class="fas fa-redo"></i></span>
+          <span>Clear</span>
+        </button>
+      </div>
+    </div>
+  
+    <div class="module-content">
+      <p>Evaluate your trained models with various metrics and visualization tools.</p>
+  
+      <div class="form-row">
+        <div class="form-field">
+          <label class="label">Select Model</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select id="modelSelector">
+                <option value="">Select a model</option>
+              </select>
+            </div>
+          </div>
+        </div>
+  
+        <div class="form-field">
+          <label class="label">Evaluation Dataset</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select id="evaluationDatasetSelector">
+                <option value="">Select a dataset</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-field">
+          <label class="label">Select Target Column</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select id="evaluationTargetColumnSelector">
+                <option value="">Select target column</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <div class="form-row">
+        <div class="form-field">
+          <label class="label">Evaluation Metrics</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select name="evaluation_metrics" multiple size="3">
+                <option value="accuracy">Accuracy</option>
+                <option value="precision">Precision</option>
+                <option value="recall">Recall</option>
+                <option value="f1">F1 Score</option>
+                <option value="roc_auc">ROC AUC</option>
+                <option value="confusion_matrix">Confusion Matrix</option>
+              </select>
+            </div>
+          </div>
+          <p class="help">Hold Ctrl/Cmd to select multiple metrics</p>
+        </div>
+  
+        <div class="form-field">
+          <label class="label">Visualization</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select name="visualization">
+                <option value="none">No Visualization</option>
+                <option value="roc_curve">ROC Curve</option>
+                <option value="precision_recall">Precision-Recall Curve</option>
+                <option value="feature_importance">Feature Importance</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <button class="button is-info" type="submit" id="evaluateButton">
+        <span class="icon"><i class="fas fa-chart-bar"></i></span>
+        <span>Evaluate Model</span>
+      </button>
+  
+      <div class="result-container" id="evaluateResult"></div>
+    </div>
+  </div>

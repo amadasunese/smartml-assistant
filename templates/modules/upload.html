@@ -1,0 +1,51 @@
+<div class="module-card" id="upload">
+    <div class="module-header">
+      <p class="module-header-title">
+        <span class="module-number">1</span>
+        Upload Dataset
+      </p>
+      <div class="action-buttons">
+        <button class="button is-outlined is-light" onclick="resetModule('upload')">
+          <span class="icon is-small"><i class="fas fa-redo"></i></span>
+          <span>Clear</span>
+        </button>
+      </div>
+      <span class="icon is-medium"><i class="fas fa-upload fa-lg"></i></span>
+    </div>
+    <div class="module-content">
+      <p>Upload your dataset to get started. Supported formats: CSV, Excel, JSON</p>
+      
+      <form id="uploadForm" enctype="multipart/form-data">
+        <div class="file has-name is-boxed is-fullwidth">
+          <label class="file-label">
+            <input class="file-input" type="file" name="file" required id="fileInput">
+            <span class="file-cta">
+              <span class="file-icon">
+                <i class="fas fa-cloud-upload-alt"></i>
+              </span>
+              <span class="file-label">
+                Choose a file…
+              </span>
+            </span>
+            <span class="file-name" id="fileName">
+              No file selected
+            </span>
+          </label>
+        </div>
+        
+        <div class="field">
+          <label class="label">Dataset Name</label>
+          <div class="control">
+            <input class="input" type="text" placeholder="Custom name for your dataset (optional)" id="datasetName">
+          </div>
+        </div>
+        
+        <button class="button is-primary mt-4" type="submit" id="uploadButton">
+          <span class="icon"><i class="fas fa-upload"></i></span>
+          <span>Upload Dataset</span>
+        </button>
+      </form>
+      
+      <div class="result-container" id="uploadResult"></div>
+    </div>
+  </div>

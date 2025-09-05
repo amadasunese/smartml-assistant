@@ -1,0 +1,54 @@
+<div class="module-card" id="eda">
+    <div class="module-header">
+      <p class="module-header-title">
+        <span class="module-number">2</span>
+        Exploratory Data Analysis
+      </p>
+      <div class="action-buttons">
+        <button class="button is-outlined is-light" onclick="resetModule('eda')">
+          <span class="icon is-small"><i class="fas fa-redo"></i></span>
+          <span>Clear</span>
+        </button>
+      </div>
+    </div>
+    <div class="module-content">
+      <p>Analyze your dataset to understand its structure, statistics, and properties.</p>
+      
+      <div class="form-row">
+        <div class="form-field">
+          <label class="label">Select Dataset</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select id="edaDatasetSelector" onchange="updateEDADataset()">
+                <option value="">Select a dataset</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-field">
+          <label class="label">Analysis Type</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select id="analysisType">
+                <option value="summary">Summary Statistics</option>
+                <option value="correlation">Correlation Matrix</option>
+                <option value="distribution">Distribution Analysis</option>
+                <option value="missing">Missing Values Analysis</option>
+                <option value="categorical">Categorical Analysis</option>
+                <option value="outliers">Outlier Detection</option>
+                <option value="pairplot">Bivariate Plot (Pairplot)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <button class="button is-link" onclick="runEDA()" id="runEDAButton">
+        <span class="icon"><i class="fas fa-chart-line"></i></span>
+        <span>Run EDA</span>
+      </button>
+      
+      <div class="result-container" id="edaResult"></div>
+    </div>
+  </div>

@@ -1,0 +1,37 @@
+<div class="module-card" id="deploy">
+    <div class="module-header">
+        <p class="module-header-title">
+            <span class="module-number">8</span>
+            Model Download
+        </p>
+        <div class="action-buttons">
+            <button class="button is-outlined is-light" onclick="resetModule('deploy')">
+                <span class="icon is-small"><i class="fas fa-redo"></i></span>
+                <span>Clear</span>
+            </button>
+        </div>
+    </div>
+    <div class="module-content">
+        <p>Download your trained model file for local use or offline deployment.</p>
+        
+        <div class="form-row">
+            <div class="form-field">
+                <label class="label">Select Model</label>
+                <div class="control">
+                    <div class="select is-fullwidth">
+                        <select id="downloadModelSelector">
+                            <option value="">Select a model</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <button class="button is-info" id="downloadButton">
+            <span class="icon"><i class="fas fa-download"></i></span>
+            <span>Download Model</span>
+        </button>
+        
+        <div class="result-container" id="downloadResult"></div>
+    </div>
+  </div>

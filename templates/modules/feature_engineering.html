@@ -1,0 +1,83 @@
+<div class="module-card" id="feature-engineering">
+    <div class="module-header">
+      <p class="module-header-title">
+        <span class="module-number">4</span>
+        Feature Engineering
+      </p>
+      <div class="action-buttons">
+        <button class="button is-outlined is-light" onclick="resetModule('feature-engineering')">
+          <span class="icon is-small"><i class="fas fa-redo"></i></span>
+          <span>Clear</span>
+        </button>
+      </div>
+    </div>
+    <div class="module-content">
+      <p>Create new features and transform existing ones to improve model performance.</p>
+      
+      <div class="form-row">
+        <div class="form-field">
+          <label class="label">Select Dataset</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select id="featureDatasetSelector">
+                <option value="">Select a dataset</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-field">
+          <label class="label">Feature Generation</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select name="feature_generation">
+                <option value="none">No Generation</option>
+                <option value="polynomial">Polynomial Features</option>
+                <option value="interaction">Interaction Terms</option>
+                <option value="datetime">Date/Time Features</option>
+              </select>
+            </div>
+          </div>
+        </div>
+  
+        <div class="form-field">
+          <label class="label">Feature Selection</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select name="feature_selection">
+                <option value="none">No Selection</option>
+                <option value="variance">Variance Threshold</option>
+                <option value="kbest">SelectKBest</option>
+                <option value="rfe">Recursive Feature Elimination</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-field">
+          <label class="label">Dimensionality Reduction</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select name="dimensionality_reduction">
+                <option value="none">No Reduction</option>
+                <option value="pca">Principal Component Analysis (PCA)</option>
+                <option value="lda">Linear Discriminant Analysis (LDA)</option>
+                <option value="tsne">t-SNE</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <button class="button is-info" type="submit" id="featureEngineeringButton">
+        <span class="icon"><i class="fas fa-plus-circle"></i></span>
+        <span>Apply Feature Engineering</span>
+      </button>
+      
+      <div class="result-container" id="featureEngineeringResult"></div>
+    </div>
+  </div>

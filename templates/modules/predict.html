@@ -1,0 +1,70 @@
+<div class="module-card" id="predict">
+    <div class="module-header">
+      <p class="module-header-title">
+        <span class="module-number">7</span>
+        Prediction
+      </p>
+      <div class="action-buttons">
+        <button class="button is-outlined is-light" onclick="resetModule('predict')">
+          <span class="icon is-small"><i class="fas fa-redo"></i></span>
+          <span>Clear</span>
+        </button>
+      </div>
+    </div>
+    <div class="module-content">
+      <p>Use a trained model to make predictions on new data.</p>
+      
+      <div class="form-row">
+        <div class="form-field">
+          <label class="label">Select Model</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select id="predictModelSelector">
+                <option value="">Select a model</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-field">
+          <label class="label">Input Data Format</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select id="inputFormatSelector" onchange="toggleInputFormat()">
+                <option value="json">JSON Format</option>
+                <option value="form">Form Input</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div id="jsonInput">
+        <div class="field">
+          <label class="label">Input Data (JSON format)</label>
+          <div class="control">
+            <textarea name="input_data" class="textarea" placeholder='{"feature1": 1, "feature2": 2}' required rows="4"></textarea>
+          </div>
+          <p class="help">Enter feature values in JSON format</p>
+        </div>
+      </div>
+      
+      <div id="formInput" style="display: none;">
+        <div class="field">
+          <label class="label">Input Values</label>
+          <div id="featureInputs">
+            <p class="help">Select a model first to see feature inputs</p>
+          </div>
+        </div>
+      </div>
+  
+      <button class="button is-warning" type="submit" id="predictButton">
+        <span class="icon"><i class="fas fa-bolt"></i></span>
+        <span>Generate Prediction</span>
+      </button>
+      
+      <div class="result-container" id="predictResult"></div>
+    </div>
+  </div>
