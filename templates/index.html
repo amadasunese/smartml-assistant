@@ -15,57 +15,208 @@
   </div>
 </div>
 
+<!-- Dashboard Stats -->
 <div class="columns is-multiline">
   <div class="column is-3">
     <div class="stat-card">
-      <div class="stat-value" id="dataset-count">0</div>
+      <div class="stat-value" id="card-datasets-count">0</div>
       <div class="stat-label">Datasets</div>
     </div>
   </div>
   <div class="column is-3">
     <div class="stat-card">
-      <div class="stat-value" id="model-count">0</div>
+      <div class="stat-value" id="card-models-count">0</div>
       <div class="stat-label">Trained Models</div>
     </div>
   </div>
   <div class="column is-3">
     <div class="stat-card">
-      <div class="stat-value" id="process-count">0</div>
+      <div class="stat-value" id="card-process-count">0</div>
       <div class="stat-label">Processed Datasets</div>
     </div>
   </div>
   <div class="column is-3">
     <div class="stat-card">
-      <div class="stat-value" id="prediction-count">0</div>
+      <div class="stat-value" id="card-prediction-count">0</div>
       <div class="stat-label">Predictions Made</div>
     </div>
   </div>
 </div>
 
+<!-- Progress Indicator -->
 <div class="progress-container" id="progressContainer">
   <div class="notification is-info is-light">
     <div class="level">
       <div class="level-left">
-        <div class="level-item">
-          Processing your request...
-        </div>
+        <div class="level-item">Processing your request...</div>
       </div>
       <div class="level-right">
-        <div class="level-item">
-          <button class="delete" id="hideProgress"></button>
-        </div>
+        <div class="level-item"><button class="delete" id="hideProgress"></button></div>
       </div>
     </div>
   </div>
   <progress class="progress is-primary" max="100"></progress>
 </div>
 
-{% include 'modules/upload.html' %}
-{% include 'modules/eda.html' %}
-{% include 'modules/preprocess.html' %}
-{% include 'modules/feature_engineering.html' %}
-{% include 'modules/train.html' %}
-{% include 'modules/evaluate.html' %}
-{% include 'modules/predict.html' %}
-{% include 'modules/deploy.html' %}
+<!-- Accordion Modules -->
+<div id="accordion-container">
+
+  <div class="accordion">
+    <div class="accordion-header">
+      <span>📂 Upload Dataset</span>
+      <i class="fas fa-chevron-right"></i>
+    </div>
+    <div class="accordion-content">
+      {% include 'modules/upload.html' %}
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="accordion-header">
+      <span>📊 Exploratory Data Analysis (EDA)</span>
+      <i class="fas fa-chevron-right"></i>
+    </div>
+    <div class="accordion-content">
+      {% include 'modules/eda.html' %}
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="accordion-header">
+      <span>🧹 Preprocessing</span>
+      <i class="fas fa-chevron-right"></i>
+    </div>
+    <div class="accordion-content">
+      {% include 'modules/preprocess.html' %}
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="accordion-header">
+      <span>🛠 Feature Engineering</span>
+      <i class="fas fa-chevron-right"></i>
+    </div>
+    <div class="accordion-content">
+      {% include 'modules/feature_engineering.html' %}
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="accordion-header">
+      <span>🤖 Model Training</span>
+      <i class="fas fa-chevron-right"></i>
+    </div>
+    <div class="accordion-content">
+      {% include 'modules/train.html' %}
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="accordion-header">
+      <span>📈 Model Evaluation</span>
+      <i class="fas fa-chevron-right"></i>
+    </div>
+    <div class="accordion-content">
+      {% include 'modules/evaluate.html' %}
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="accordion-header">
+      <span>✨ Prediction</span>
+      <i class="fas fa-chevron-right"></i>
+    </div>
+    <div class="accordion-content">
+      {% include 'modules/predict.html' %}
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="accordion-header">
+      <span>🚀 Deployment</span>
+      <i class="fas fa-chevron-right"></i>
+    </div>
+    <div class="accordion-content">
+      {% include 'modules/deploy.html' %}
+    </div>
+  </div>
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const accordions = document.querySelectorAll(".accordion");
+    
+      accordions.forEach((accordion, index) => {
+        const header = accordion.querySelector(".accordion-header");
+        const content = accordion.querySelector(".accordion-content");
+        const icon = header.querySelector("i");
+    
+        // Open the first accordion by default
+        if (index === 0) {
+          accordion.classList.add("is-active");
+          content.style.maxHeight = content.scrollHeight + "px";
+          icon.classList.add("rotate");
+        }
+    
+        // Toggle on click
+        header.addEventListener("click", () => {
+          const isActive = accordion.classList.contains("is-active");
+    
+          // Close all accordions
+          accordions.forEach(acc => {
+            acc.classList.remove("is-active");
+            acc.querySelector(".accordion-content").style.maxHeight = null;
+            acc.querySelector("i").classList.remove("rotate");
+          });
+    
+          // If it wasn’t active, open this one
+          if (!isActive) {
+            accordion.classList.add("is-active");
+            content.style.maxHeight = content.scrollHeight + "px";
+            icon.classList.add("rotate");
+          }
+        });
+      });
+    });
+    </script>
+    
+    <style>
+    .accordion {
+      border: 1px solid #dbdbdb;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .accordion-header {
+      padding: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f5f5f5;
+    }
+    .accordion-header:hover {
+      background: #f0f0f0;
+    }
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      padding: 0 1rem;
+    }
+    .accordion.is-active .accordion-content {
+      padding: 1rem;
+    }
+    .accordion-header i {
+      transition: transform 0.3s ease;
+    }
+    .accordion-header i.rotate {
+      transform: rotate(90deg);
+    }
+    </style>
+    
 {% endblock %}

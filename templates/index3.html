@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-header">
+  <h1 class="title is-3 has-text-primary">SmartML Assistant</h1>
+  <p class="subtitle is-5">End-to-end machine learning workflows simplified platform.</p>
+  <div class="mt-4">
+    <span class="feature-pill"><i class="fas fa-upload mr-1"></i> Data Upload</span>
+    <span class="feature-pill"><i class="fas fa-chart-line mr-1"></i> EDA</span>
+    <span class="feature-pill"><i class="fas fa-cogs mr-1"></i> Preprocessing</span>
+    <span class="feature-pill"><i class="fas fa-wrench mr-1"></i> Feature Engineering</span>
+    <span class="feature-pill"><i class="fas fa-robot mr-1"></i> Model Training</span>
+    <span class="feature-pill"><i class="fas fa-magic mr-1"></i> Predictions</span>
+    <span class="feature-pill"><i class="fas fa-rocket mr-1"></i> Deployment</span>
+  </div>
+</div>
+
+<div class="columns is-multiline">
+  <div class="column is-3">
+    <div class="stat-card">
+      <div class="stat-value" id="card-datasets-count">0</div>
+      <div class="stat-label">Datasets</div>
+    </div>
+  </div>
+  <div class="column is-3">
+    <div class="stat-card">
+      <div class="stat-value" id="card-models-count">0</div>
+      <div class="stat-label">Trained Models</div>
+    </div>
+  </div>
+  <div class="column is-3">
+    <div class="stat-card">
+      <div class="stat-value" id="card-process-count">0</div>
+      <div class="stat-label">Processed Datasets</div>
+    </div>
+  </div>
+  <div class="column is-3">
+    <div class="stat-card">
+      <div class="stat-value" id="card-prediction-count">0</div>
+      <div class="stat-label">Predictions Made</div>
+    </div>
+  </div>
+</div>
+
+<div class="progress-container" id="progressContainer">
+  <div class="notification is-info is-light">
+    <div class="level">
+      <div class="level-left">
+        <div class="level-item">
+          Processing your request...
+        </div>
+      </div>
+      <div class="level-right">
+        <div class="level-item">
+          <button class="delete" id="hideProgress"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <progress class="progress is-primary" max="100"></progress>
+</div>
+
+{% include 'modules/upload.html' %}
+{% include 'modules/eda.html' %}
+{% include 'modules/preprocess.html' %}
+{% include 'modules/feature_engineering.html' %}
+{% include 'modules/train.html' %}
+{% include 'modules/evaluate.html' %}
+{% include 'modules/predict.html' %}
+{% include 'modules/deploy.html' %}
+
+{% endblock %}

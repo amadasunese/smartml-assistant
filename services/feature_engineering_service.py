@@ -6,7 +6,7 @@ from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.manifold import TSNE
 from sklearn.linear_model import LogisticRegression
-from services.data_services import load_dataset
+from services.data_services import load_dataset, PROCESSED_DIR, MODEL_DIR, UPLOAD_FOLDER
 
 
 # DATASET_DIR = "datasets"
@@ -14,10 +14,14 @@ from services.data_services import load_dataset
 # os.makedirs(PROCESSED_DIR, exist_ok=True)
 
 
-PROCESSED_DIR = "uploaded_data"
-MODEL_DIR = "saved_models"
-UPLOAD_FOLDER = "uploaded_data"
-os.makedirs(PROCESSED_DIR, exist_ok=True)
+# PROCESSED_DIR = "uploaded_data"
+# MODEL_DIR = "saved_models"
+# UPLOAD_FOLDER = "uploaded_data"
+# os.makedirs(PROCESSED_DIR, exist_ok=True)
+
+# PROCESSED_DIR = "processed_data"
+# MODEL_DIR = "saved_models"
+# UPLOAD_FOLDER = "uploaded_data"
 
 def _load_dataset(dataset_name):
     """Load dataset based on file extension (CSV, Excel, JSON)."""

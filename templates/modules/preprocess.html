@@ -13,28 +13,26 @@
   </div>
 
   <div class="module-content">
-    <p class="module-description">Clean and prepare your data for machine learning by configuring the preprocessing steps below.</p>
-    
-    <!-- Data Selection Section -->
+    <p class="module-description">
+      Clean and prepare your data for machine learning by configuring the preprocessing steps below.
+    </p>
+
+    <!-- 1. Data Selection -->
     <div class="config-section">
       <h3 class="config-section-title">Data Selection</h3>
-      <div class="columns">
-        <div class="column is-6">
-          <div class="field">
-            <label class="label">Select Dataset</label>
-            <div class="control">
-              <div class="select is-fullwidth">
-                <select id="preprocessDatasetSelector" name="dataset_name">
-                  <option value="">Select a dataset</option>
-                </select>
-              </div>
-            </div>
+      <div class="field">
+        <label class="label">Select Dataset</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select id="preprocessDatasetSelector" name="dataset_name">
+              <option value="">Select a dataset</option>
+            </select>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Column Management Section -->
+    <!-- 2. Column Management -->
     <div class="config-section">
       <h3 class="config-section-title">Column Management</h3>
       <div class="field">
@@ -48,7 +46,7 @@
       </div>
     </div>
 
-    <!-- Missing Values Section -->
+    <!-- 3. Missing Values -->
     <div class="config-section">
       <h3 class="config-section-title">Missing Values Handling</h3>
       <div class="columns">
@@ -83,7 +81,25 @@
       </div>
     </div>
 
-    <!-- Outlier Handling Section -->
+    <!-- 4. Duplicate Handling -->
+    <div class="config-section">
+      <h3 class="config-section-title">Duplicate Handling</h3>
+      <div class="field">
+        <label class="label">Action</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select name="duplicate_handling">
+              <option value="none">Do nothing</option>
+              <option value="drop">Drop Duplicates</option>
+              <option value="keep_first">Keep First Occurrence</option>
+              <option value="keep_last">Keep Last Occurrence</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Outlier Handling -->
     <div class="config-section">
       <h3 class="config-section-title">Outlier Handling</h3>
       <div class="columns">
@@ -134,7 +150,26 @@
       </div>
     </div>
 
-    <!-- Encoding & Scaling Section -->
+    <!-- 6. Skewness Handling -->
+    <div class="config-section">
+      <h3 class="config-section-title">Skewness Handling</h3>
+      <div class="field">
+        <label class="label">Transformation Method</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select name="skewness_method">
+              <option value="none">Do nothing</option>
+              <option value="log">Log Transform</option>
+              <option value="sqrt">Square Root Transform</option>
+              <option value="boxcox">Box-Cox Transform</option>
+              <option value="yeojohnson">Yeo-Johnson Transform</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. Encoding & Scaling -->
     <div class="config-section">
       <h3 class="config-section-title">Encoding & Scaling</h3>
       <div class="columns">
@@ -174,29 +209,25 @@
       </div>
     </div>
 
-    <!-- Class Imbalance Section -->
+    <!-- 8. Class Imbalance -->
     <div class="config-section">
       <h3 class="config-section-title">Class Imbalance Handling</h3>
-      <div class="columns">
-        <div class="column is-6">
-          <div class="field">
-            <label class="label">Method</label>
-            <div class="control">
-              <div class="select is-fullwidth">
-                <select name="imbalance_method">
-                  <option value="none">Do nothing</option>
-                  <option value="smote">SMOTE (Synthetic Minority Oversampling)</option>
-                  <option value="undersample">Random Undersampling</option>
-                  <option value="oversample">Random Oversampling</option>
-                </select>
-              </div>
-            </div>
+      <div class="field">
+        <label class="label">Method</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select name="imbalance_method">
+              <option value="none">Do nothing</option>
+              <option value="smote">SMOTE (Synthetic Minority Oversampling)</option>
+              <option value="undersample">Random Undersampling</option>
+              <option value="oversample">Random Oversampling</option>
+            </select>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Action Buttons -->
+    <!-- 9. Action Buttons -->
     <div class="field is-grouped action-buttons-group">
       <div class="control">
         <button class="button is-info" type="submit" id="preprocessButton">
@@ -212,7 +243,7 @@
       </div>
     </div>
 
-    <!-- Results -->
+    <!-- 10. Results -->
     <div class="result-container" id="preprocessResult"></div>
   </div>
 </div>

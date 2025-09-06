@@ -1,7 +1,8 @@
 import os
 import joblib
+from services.data_services import MODEL_DIR
 
-MODEL_DIR = "saved_models"
+# MODEL_DIR = "saved_models"
 
 def save_model(model, model_id):
     os.makedirs(MODEL_DIR, exist_ok=True)

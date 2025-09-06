@@ -8,8 +8,10 @@ import numpy as np
 from imblearn.over_sampling import RandomOverSampler, SMOTE
 from imblearn.under_sampling import RandomUnderSampler
 from scipy.stats import boxcox
+import scipy.stats as stats
+from services.data_services import PROCESSED_DIR
 
-PROCESSED_DIR = "uploaded_data"
+# PROCESSED_DIR = "uploaded_data"
 
 # def preprocess_pipeline(dataset_name, config):
 #     try:
@@ -672,6 +674,35 @@ def preprocess_pipeline(dataset_name, config):
                             df[col] = df[col] - df[col].min() + 1
                         df[col], _ = boxcox(df[col])
         
+        # 2b. Handle Skewness
+        skewness_method = config.get("skewness_method", "none")
+        skewness_columns = config.get("skewness_columns", [])
+
+        if skewness_method != "none":
+            if not skewness_columns:
+                skewness_columns = df.select_dtypes(include=np.number).columns.tolist()
+                if target_column and target_column in skewness_columns:
+                    skewness_columns.remove(target_column)
+            
+            for col in skewness_columns:
+                if col not in df.columns:
+                    continue
+                if skewness_method == "log":
+                    df[col] = np.log1p(df[col] - df[col].min() + 1)
+                elif skewness_method == "sqrt":
+                    df[col] = np.sqrt(df[col] - df[col].min())
+                elif skewness_method == "boxcox":
+                    series = df[col].dropna()
+                    if series.min() <= 0:
+                        series = series - series.min() + 1
+                    transformed, _ = boxcox(series)
+                    df.loc[series.index, col] = transformed
+                elif skewness_method == "yeojohnson":
+                    series = df[col].dropna()
+                    transformed, _ = stats.yeojohnson(series)
+                    df.loc[series.index, col] = transformed
+                    
+        
         # 3. Encoding
         encoding_method = config.get("encoding_method")
         encoding_columns = config.get("encoding_columns", [])
@@ -747,8 +778,19 @@ def preprocess_pipeline(dataset_name, config):
                 df = pd.concat([pd.DataFrame(X_resampled, columns=X.columns), 
                                pd.Series(y_resampled, name=target_column)], axis=1)
         
-        # Save the processed dataset
+        # 0b. Handle Duplicates
+        duplicate_handling = config.get("duplicate_handling", "none")
+        if duplicate_handling != "none":
+            if duplicate_handling == "drop":
+                df = df.drop_duplicates()
+            elif duplicate_handling == "keep_first":
+                df = df.drop_duplicates(keep="first")
+            elif duplicate_handling == "keep_last":
+                df = df.drop_duplicates(keep="last")
+        
+       # Save the processed dataset
         processed_name = f"processed_{dataset_name}"
+        os.makedirs(PROCESSED_DIR, exist_ok=True)  # ensure dir exists
         path = os.path.join(PROCESSED_DIR, processed_name)
         df.to_csv(path, index=False)
         

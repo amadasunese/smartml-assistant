@@ -1,10 +1,15 @@
 # views.py - Fix imports
 from flask import Blueprint, jsonify, request, render_template, send_file
-from services.data_services import load_dataset, save_uploaded_file, UPLOAD_FOLDER
+from services.data_services import load_dataset, save_uploaded_file, UPLOAD_FOLDER, PROCESSED_DIR
 from services.model_services import list_models, load_model, save_model
 from services.preprocess_services import preprocess_pipeline
 from services.train_services import train_model, get_dataset_columns
 from services.feature_engineering_service import apply_feature_engineering
+import requests
+import os
+import re
+
+
 
 
 import uuid
@@ -46,6 +51,118 @@ def upload_dataset():
     file = request.files["file"]
     filename = save_uploaded_file(file)
     return jsonify({"message": "File uploaded", "filename": filename})
+
+
+
+@bp.route("/upload/url", methods=["POST"])
+def upload_dataset_url():
+    data = request.get_json()
+    url = data.get("url")
+
+    if not url:
+        return jsonify({"error": "No URL provided"}), 400
+
+    try:
+        # Fetch the dataset from the URL
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+
+        # Extract filename from URL
+        filename = url.split("/")[-1]
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+
+        # Save file locally
+        with open(filepath, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+
+        return jsonify({"message": "File downloaded", "filename": filename})
+    except Exception as e:
+        return jsonify({"error": f"Failed to fetch dataset: {str(e)}"}), 500
+
+
+# @bp.route("/upload/cloud", methods=["POST"])
+# def upload_dataset_cloud():
+#     data = request.get_json()
+#     source = data.get("provider")   # e.g., "gdrive", "dropbox", "s3"
+#     url = data.get("url")
+
+#     if not url or not source:
+#         return jsonify({"error": "Missing cloud source or URL"}), 400
+
+#     try:
+#         # Download file from cloud link (same as URL import)
+#         response = requests.get(url, stream=True)
+#         response.raise_for_status()
+
+#         filename = f"{source}_{url.split('/')[-1]}"
+#         filepath = os.path.join(UPLOAD_FOLDER, filename)
+
+#         with open(filepath, "wb") as f:
+#             for chunk in response.iter_content(chunk_size=8192):
+#                 f.write(chunk)
+
+#         return jsonify({"message": f"Imported from {source}", "filename": filename})
+#     except Exception as e:
+#         return jsonify({"error": f"Failed to import from {source}: {str(e)}"}), 500
+
+@bp.route("/upload/cloud", methods=["POST"])
+def upload_dataset_cloud():
+    data = request.get_json()
+    provider = data.get("provider")
+    url = data.get("url")
+
+    if not provider or not url:
+        return jsonify({"error": "Missing cloud source or URL"}), 400
+
+    # --- Validate and normalize direct download URLs ---
+    if provider.lower() == "google drive":
+        # User must provide FILE_ID, not the full link
+        if "drive.google.com" in url:
+            return jsonify({"error": "Please provide only the FILE_ID, not the full Google Drive link"}), 400
+        url = f"https://drive.google.com/uc?export=download&id={url.strip()}"  # build direct link
+
+    elif provider.lower() == "dropbox":
+        # Ensure dl=1 for direct download
+        if url.endswith("?dl=0"):
+            url = url.replace("?dl=0", "?dl=1")
+        elif "dropbox.com" in url and "?dl=1" not in url:
+            url += "?dl=1"
+
+    elif provider.lower() == "aws s3":
+        # Expect a valid S3 object link (public or pre-signed)
+        if not url.startswith("http"):
+            return jsonify({"error": "Please provide a valid AWS S3 object URL"}), 400
+
+    else:
+        return jsonify({"error": f"Unsupported provider: {provider}"}), 400
+
+    try:
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+
+        # Extract filename from headers, fallback to URL
+        cd = response.headers.get("content-disposition")
+        if cd:
+            match = re.findall('filename="?([^"]+)"?', cd)
+            filename = match[0] if match else None
+        else:
+            filename = None
+
+        if not filename:
+            filename = url.split("/")[-1].split("?")[0]
+
+        filename = f"{provider.lower().replace(' ', '_')}_{filename}"
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+
+        with open(filepath, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+
+        return jsonify({"message": f"Imported from {provider}", "filename": filename}), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to import from {provider}: {str(e)}"}), 500
 
 # views.py - Enhanced EDA function
 @bp.route("/eda/summary/<dataset_name>", methods=["GET"])
@@ -451,6 +568,40 @@ def perform_eda(analysis_type, dataset_name):
             plt.close(g.figure)  # Close the figure to free memory
 
             return jsonify({"image": f"data:image/png;base64,{img_base64}"})
+        
+        elif analysis_type == 'duplicates':
+            duplicate_count = df.duplicated().sum()
+            return jsonify({
+                "total_rows": len(df),
+                "duplicates": int(duplicate_count),
+                "percentage": float((duplicate_count / len(df)) * 100)
+            })
+
+        elif analysis_type == 'imbalance':
+            imbalance_data = {}
+            if 'target' in df.columns:  # adjust if target is configurable
+                counts = df['target'].value_counts()
+                imbalance_data = counts.to_dict()
+            else:
+                return jsonify({"error": "No 'target' column found for imbalance check"}), 400
+
+            return jsonify({
+                "target_column": "target",
+                "class_distribution": imbalance_data
+            })
+
+        elif analysis_type == 'skewness':
+            skew_data = {}
+            for col in df.select_dtypes(include=np.number).columns:
+                skew_val = df[col].skew()
+                skew_data[col] = {
+                    "skewness": float(skew_val),
+                    "boxcox_applicable": bool((df[col] > 0).all() and abs(skew_val) > 0.5)
+                }
+            return jsonify({
+                "columns": df.select_dtypes(include=np.number).columns.tolist(),
+                "skewness": skew_data
+            })
 
         else:
             return jsonify({"error": "Invalid analysis type"}), 400
@@ -460,15 +611,42 @@ def perform_eda(analysis_type, dataset_name):
         return jsonify({"error": f"Error processing data: {str(e)}"}), 500
 
 # views.py - Add this function
+# @bp.route("/datasets", methods=["GET"])
+# def list_datasets():
+#     try:
+#         datasets = [f for f in os.listdir(UPLOAD_FOLDER) 
+#                    if os.path.isfile(os.path.join(UPLOAD_FOLDER, f))]
+#         return jsonify({"datasets": datasets})
+#     except Exception as e:
+#         return jsonify({"error": f"Error listing datasets: {str(e)}"}), 500
+
 @bp.route("/datasets", methods=["GET"])
 def list_datasets():
     try:
-        datasets = [f for f in os.listdir(UPLOAD_FOLDER) 
-                   if os.path.isfile(os.path.join(UPLOAD_FOLDER, f))]
+        # Ensure both directories exist
+        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+        os.makedirs(PROCESSED_DIR, exist_ok=True)
+
+        # Raw uploaded datasets
+        raw_datasets = [
+            f for f in os.listdir(UPLOAD_FOLDER) 
+            if os.path.isfile(os.path.join(UPLOAD_FOLDER, f)) and f.lower().endswith((".csv", ".xls", ".xlsx", ".json"))
+        ]
+
+        # Processed datasets
+        processed_datasets = [
+            f for f in os.listdir(PROCESSED_DIR)
+            if os.path.isfile(os.path.join(PROCESSED_DIR, f)) and f.lower().endswith(".csv")
+        ]
+
+        # Merge both lists
+        datasets = raw_datasets + processed_datasets
+
         return jsonify({"datasets": datasets})
     except Exception as e:
         return jsonify({"error": f"Error listing datasets: {str(e)}"}), 500
-    
+
+
 # Models
 
 @bp.route("/models", methods=["GET"])
@@ -642,4 +820,67 @@ def download_model(model_id):
     except Exception as e:
         # Catch any other potential exceptions and return a server error
         return jsonify({'error': str(e)}), 500
-     
+
+
+# def has_ext(filename, extensions):
+#     return any(filename.lower().endswith(ext) for ext in extensions)
+
+# track predictions (in memory for now)
+prediction_counter = 0
+
+def has_ext(filename, exts):
+    return any(filename.lower().endswith(ext) for ext in exts)
+
+@bp.route("/stats", methods=["GET"])
+def stats():
+    try:
+        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+        os.makedirs(PROCESSED_DIR, exist_ok=True)
+        os.makedirs(MODEL_DIR, exist_ok=True)
+
+        datasets = [f for f in os.listdir(UPLOAD_FOLDER) if has_ext(f, [".csv", ".xls", ".xlsx", ".json"])]
+        processes = [f for f in os.listdir(PROCESSED_DIR) if has_ext(f, [".csv", ".xls", ".xlsx", ".json"]) and f.startswith("processed_")]
+        models = [f for f in os.listdir(MODEL_DIR) if f.endswith(".pkl")]
+
+        return jsonify({
+            "datasets": len(datasets),
+            "models": len(models),
+            "processes": len(processes),
+            "predictions": prediction_counter
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+# @bp.route("/stats", methods=["GET"])
+# def stats():
+#     try:
+#         # datasets = raw uploaded files in UPLOAD_FOLDER
+#         datasets = [
+#             f for f in os.listdir(UPLOAD_FOLDER)
+#             if has_ext(f, [".csv", ".xls", ".xlsx", ".json"])
+#         ]
+
+#         print('this is the dataset', datasets)
+
+#         # processes = processed datasets in PROCESSED_DIR
+#         processes = [
+#             f for f in os.listdir(PROCESSED_DIR)
+#             if has_ext(f, [".csv", ".xls", ".xlsx", ".json"]) and f.startswith("processed_")
+#         ]
+
+#         # models = saved model files in MODEL_DIR
+#         models = [
+#             f for f in os.listdir(MODEL_DIR)
+#             if f.endswith(".pkl")
+#         ]
+
+#         print('this is the train model', models)
+
+#         return jsonify({
+#             "datasets": len(datasets),
+#             "models": len(models),
+#             "processes": len(processes),
+#             "predictions": prediction_counter
+#         })
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500

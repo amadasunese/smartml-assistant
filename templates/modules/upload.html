@@ -12,40 +12,270 @@
       </div>
       <span class="icon is-medium"><i class="fas fa-upload fa-lg"></i></span>
     </div>
+  
     <div class="module-content">
-      <p>Upload your dataset to get started. Supported formats: CSV, Excel, JSON</p>
-      
-      <form id="uploadForm" enctype="multipart/form-data">
-        <div class="file has-name is-boxed is-fullwidth">
-          <label class="file-label">
-            <input class="file-input" type="file" name="file" required id="fileInput">
-            <span class="file-cta">
-              <span class="file-icon">
-                <i class="fas fa-cloud-upload-alt"></i>
-              </span>
-              <span class="file-label">
-                Choose a file…
-              </span>
-            </span>
-            <span class="file-name" id="fileName">
-              No file selected
-            </span>
-          </label>
+      <p class="mb-3">Choose how you’d like to add your dataset. Supported formats: <strong>CSV, Excel, JSON</strong></p>
+  
+      <!-- Tabs for upload methods -->
+      <div class="tabs is-boxed is-small">
+        <ul>
+          <li class="is-active" data-tab="local"><a><i class="fas fa-desktop"></i> Local File</a></li>
+          <li data-tab="url"><a><i class="fas fa-link"></i> From URL</a></li>
+          <li data-tab="cloud"><a><i class="fas fa-cloud"></i> Cloud Storage</a></li>
+        </ul>
+      </div>
+  
+      <!-- Local File Upload -->
+      <div class="tab-content" id="tab-local">
+        <div class="file-drop-area has-text-centered p-5 mb-4" 
+             style="border: 2px dashed #00d1b2; border-radius: 12px; cursor: pointer;"
+             onclick="document.getElementById('fileInput').click()">
+          <span class="icon is-large"><i class="fas fa-cloud-upload-alt fa-2x"></i></span>
+          <p class="mt-2">Drag & Drop or <span class="has-text-link">Browse</span></p>
+          <input class="file-input" type="file" name="file" id="fileInput" hidden>
+          <p id="filePreview" class="is-size-7 has-text-grey mt-1">No file selected</p>
         </div>
-        
+      </div>
+  
+      <!-- URL Upload -->
+      <div class="tab-content is-hidden" id="tab-url">
         <div class="field">
-          <label class="label">Dataset Name</label>
+          <label class="label">Dataset URL</label>
           <div class="control">
-            <input class="input" type="text" placeholder="Custom name for your dataset (optional)" id="datasetName">
+            <input class="input" type="url" placeholder="https://example.com/data.csv" id="datasetUrl">
           </div>
         </div>
-        
-        <button class="button is-primary mt-4" type="submit" id="uploadButton">
-          <span class="icon"><i class="fas fa-upload"></i></span>
-          <span>Upload Dataset</span>
+      </div>
+  
+
+
+      <!-- Cloud Storage Upload -->
+    <div class="tab-content is-hidden" id="tab-cloud">
+        <div class="buttons">
+        <button class="button is-info is-fullwidth mb-2" onclick="openCloudModal('Google Drive')">
+            <i class="fab fa-google-drive mr-2"></i> Import from Google Drive
         </button>
-      </form>
+        <button class="button is-link is-fullwidth mb-2" onclick="openCloudModal('Dropbox')">
+            <i class="fab fa-dropbox mr-2"></i> Import from Dropbox
+        </button>
+        <button class="button is-warning is-fullwidth" onclick="openCloudModal('AWS S3')">
+            <i class="fas fa-cloud mr-2"></i> Import from AWS S3
+        </button>
+        </div>
+    </div>
+    
+    <!-- Modal -->
+    <div class="modal" id="cloudModal">
+        <div class="modal-background" onclick="closeCloudModal()"></div>
+        <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title" id="cloudModalTitle">Cloud Import</p>
+            <button class="delete" aria-label="close" onclick="closeCloudModal()"></button>
+        </header>
+  
+        <section class="modal-card-body">
+            <div class="content" id="cloudInstructions"></div>
+            <div class="field">
+              <label class="label">File ID / Direct URL</label>
+              <div class="control">
+                <input class="input" type="text" id="cloudUrl" placeholder="Paste direct link or file ID">
+              </div>
+            </div>
+          </section>
+          
+        <footer class="modal-card-foot">
+            <button class="button is-primary" onclick="submitCloudImport()">Import</button>
+            <button class="button" onclick="closeCloudModal()">Cancel</button>
+        </footer>
+        </div>
+    </div>
+  
+        </div>
       
-      <div class="result-container" id="uploadResult"></div>
+        <!-- <div class="field mt-3">
+          <label class="label">File URL</label>
+          <div class="control">
+            <input class="input" type="url" id="cloudUrl" placeholder="https://drive.google.com/file/...">
+          </div>
+        </div>
+      </div>
+      
+  
+      <div class="field mt-4">
+        <label class="label">Dataset Name</label>
+        <div class="control">
+          <input class="input" type="text" placeholder="Custom name (optional)" id="datasetName">
+        </div>
+      </div> -->
+  
+      <!-- Upload Button -->
+      <button class="button is-primary mt-3 is-fullwidth" type="submit" id="uploadButton">
+        <span class="icon"><i class="fas fa-upload"></i></span>
+        <span>Upload Dataset</span>
+      </button>
+  
+      <!-- Result -->
+      <div class="result-container mt-3" id="uploadResult"></div>
     </div>
   </div>
+
+  <script>
+   // initUploadTabs: robust tab switching for the #upload module
+    function initUploadTabs(containerSelector = '#upload') {
+    try {
+        const container = document.querySelector(containerSelector);
+        if (!container) {
+        console.warn('initUploadTabs: no container found for', containerSelector);
+        return;
+        }
+
+        const tabList = container.querySelector('.tabs ul');
+        if (!tabList) {
+        console.warn('initUploadTabs: no .tabs ul inside', containerSelector);
+        return;
+        }
+
+        const tabContents = Array.from(container.querySelectorAll('.tab-content'));
+        const tabLis = Array.from(container.querySelectorAll('.tabs ul li'));
+
+        // helper to hide/show contents (works even if Bulma's is-hidden doesn't exist)
+        function hideAllContents() {
+        tabContents.forEach(c => {
+            // prefer class toggle if Bulma used; otherwise use inline style
+            if (c.classList) c.classList.add('is-hidden');
+            c.style.display = 'none';
+        });
+        }
+        function showContentByName(name) {
+        const el = container.querySelector(`#tab-${name}`);
+        if (!el) return;
+        if (el.classList) el.classList.remove('is-hidden');
+        el.style.display = '';
+        }
+
+        // Activate a given <li> (tab)
+        function activateTab(li) {
+        if (!li) return;
+        // clear active on all lis
+        tabLis.forEach(x => x.classList.remove('is-active'));
+        li.classList.add('is-active');
+
+        // hide all contents then show the chosen
+        hideAllContents();
+        const name = li.getAttribute('data-tab');
+        if (name) showContentByName(name);
+        else console.warn('initUploadTabs: clicked tab has no data-tab attribute', li);
+        }
+
+        // Delegate clicks from the UL -> supports clicks on <a> or inner icons/text
+        tabList.addEventListener('click', (ev) => {
+        const link = ev.target.closest('a');
+        const li = ev.target.closest('li');
+        if (!li || !tabList.contains(li)) return;
+        ev.preventDefault();
+        activateTab(li);
+        });
+
+        // Ensure a default tab: the first li with is-active, or first li
+        let initial = tabLis.find(li => li.classList.contains('is-active')) || tabLis[0];
+        if (!initial) {
+        console.warn('initUploadTabs: no tabs found inside', containerSelector);
+        return;
+        }
+
+        // Hide all and show initial
+        hideAllContents();
+        activateTab(initial);
+
+        console.debug('initUploadTabs: initialized for', containerSelector);
+    } catch (err) {
+        console.error('initUploadTabs error:', err);
+    }
+    }
+
+    // Run safely whether DOMContentLoaded already fired or not
+    if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => initUploadTabs('#upload'));
+    } else {
+    // DOM already ready
+    initUploadTabs('#upload');
+    }
+
+
+    let selectedProvider = null;
+
+    // Open modal
+    function openCloudModal(provider) {
+    selectedProvider = provider;
+    document.getElementById("cloudModalTitle").innerText = `Import from ${provider}`;
+    const instructions = {
+        "Google Drive": `
+        <p><strong>Google Drive Instructions:</strong></p>
+        <ol>
+            <li>Open the file in Google Drive.</li>
+            <li>Click "Share" → set access to "Anyone with the link".</li>
+            <li>Copy the link and extract the FILE_ID (between <code>/d/</code> and <code>/view</code>).</li>
+            <li>Enter only the FILE_ID here. Example: <code>1a2B3cD4EfGhIjK</code></li>
+        </ol>
+        `,
+        "Dropbox": `
+        <p><strong>Dropbox Instructions:</strong></p>
+        <ol>
+            <li>Copy the shareable link. Example: <code>https://www.dropbox.com/s/abcd1234/file.csv?dl=0</code></li>
+            <li>Change <code>dl=0</code> to <code>dl=1</code> for direct download.</li>
+            <li>Paste the modified link here.</li>
+        </ol>
+        `,
+        "AWS S3": `
+        <p><strong>AWS S3 Instructions:</strong></p>
+        <ol>
+            <li>For public files: paste the object’s full URL (e.g., <code>https://mybucket.s3.amazonaws.com/data.csv</code>).</li>
+            <li>For private files: use a pre-signed URL generated from AWS SDK.</li>
+        </ol>
+        `
+    };
+
+    document.getElementById("cloudInstructions").innerHTML = instructions[provider] || "";
+    
+    document.getElementById("cloudModal").classList.add("is-active");
+    }
+
+    // Close modal
+    function closeCloudModal() {
+    document.getElementById("cloudModal").classList.remove("is-active");
+    document.getElementById("cloudUrl").value = "";
+    selectedProvider = null;
+    }
+
+    // Submit cloud import
+    async function submitCloudImport() {
+    const url = document.getElementById("cloudUrl").value.trim();
+    if (!url) {
+        alert("Please enter a valid file URL");
+        return;
+    }
+
+    try {
+        const response = await fetch("/upload/cloud", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: selectedProvider, url })
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+        alert(`✅ File imported successfully: ${result.filename}`);
+        closeCloudModal();
+        } else {
+        alert(`❌ Error: ${result.error}`);
+        }
+    } catch (err) {
+        alert("⚠️ Upload failed. Please try again.");
+        console.error(err);
+    }
+    }
+
+
+    </script>
+    
+    

@@ -11,30 +11,56 @@ from sklearn.metrics import accuracy_score
 from sklearn.ensemble import RandomForestClassifier
 
 
-PROCESSED_DIR = "uploaded_data"
-MODEL_DIR = "saved_models"
+
+
 UPLOAD_FOLDER = "uploaded_data"
+PROCESSED_DIR = "processed_data"
+MODEL_DIR = "saved_models"
 
 
 
 # data_services.py - Enhanced load_dataset function
-def load_dataset(dataset_name):
-    base_dir = "uploaded_data"
-    file_path = os.path.join(base_dir, dataset_name)
+# def load_dataset(dataset_name):
+#     base_dir = "uploaded_data"
+#     file_path = os.path.join(base_dir, dataset_name)
     
+#     if not os.path.exists(file_path):
+#         raise FileNotFoundError(f"Dataset '{dataset_name}' not found at {file_path}")
+    
+#     # Handle different file types
+#     if dataset_name.endswith('.csv'):
+#         return pd.read_csv(file_path)
+#     elif dataset_name.endswith(('.xls', '.xlsx')):
+#         return pd.read_excel(file_path)
+#     elif dataset_name.endswith('.json'):
+#         return pd.read_json(file_path)
+#     else:
+#         raise ValueError(f"Unsupported file format: {dataset_name}")
+
+
+
+def load_dataset(dataset_name):
+    # First, look inside uploaded_data
+    file_path = os.path.join(UPLOAD_FOLDER, dataset_name)
+    
+    # If not found, look inside processed_data
     if not os.path.exists(file_path):
-        raise FileNotFoundError(f"Dataset '{dataset_name}' not found at {file_path}")
+        file_path = os.path.join(PROCESSED_DIR, dataset_name)
+
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"Dataset '{dataset_name}' not found in {UPLOAD_FOLDER} or {PROCESSED_DIR}")
     
     # Handle different file types
-    if dataset_name.endswith('.csv'):
+    if dataset_name.lower().endswith('.csv'):
         return pd.read_csv(file_path)
-    elif dataset_name.endswith(('.xls', '.xlsx')):
+    elif dataset_name.lower().endswith(('.xls', '.xlsx')):
         return pd.read_excel(file_path)
-    elif dataset_name.endswith('.json'):
+    elif dataset_name.lower().endswith('.json'):
         return pd.read_json(file_path)
     else:
         raise ValueError(f"Unsupported file format: {dataset_name}")
-    
+
+
 # dataset upload services
 def save_uploaded_file(file_storage):
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)

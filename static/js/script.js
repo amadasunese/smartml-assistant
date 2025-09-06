@@ -38,95 +38,6 @@ function setJSON(el, data) {
   }
 }
 
-// // =============================
-// // Dropdown Refreshers
-// // =============================
-// async function refreshAllDropdowns() {
-//   await Promise.all([refreshDatasets(), refreshModels()]);
-// }
-
-// /**
-//  * Expected server responses:
-//  * /datasets -> either { datasets: ["ds1.csv", ...] } OR ["ds1.csv", ...]
-//  */
-// async function refreshDatasets() {
-//   try {
-//     const res = await fetch("/datasets", { method: "GET" });
-//     const raw = await res.json();
-//     const datasets = Array.isArray(raw) ? raw : raw?.datasets || [];
-
-//     const datasetSelectors = [
-//       "edaDatasetSelector",
-//       "preprocessDatasetSelector",
-//       "featureDatasetSelector",
-//       "trainDatasetSelector",
-//       "evaluationDatasetSelector",
-//     ];
-
-//     datasetSelectors.forEach((id) => {
-//       const sel = document.getElementById(id);
-//       if (!sel) return;
-//       sel.innerHTML = '<option value="">Select a dataset</option>';
-//       datasets.forEach((ds) => {
-//         const opt = document.createElement("option");
-//         opt.value = ds;
-//         opt.textContent = ds;
-//         sel.appendChild(opt);
-//       });
-//     });
-
-//     if (datasets.length && !currentDataset) currentDataset = datasets[0];
-//   } catch (err) {
-//     console.error("Error fetching datasets:", err);
-//   }
-// }
-
-// /**
-//  * Expected server responses:
-//  * /models -> can be:
-//  *   - ["id1","id2"] OR
-//  *   - { models: ["id1","id2"] } OR
-//  *   - [{id:"id1", name:"Model A"}, ...] OR
-//  *   - { models: [{id:"id1", name:"Model A"}, ...] }
-//  */
-// async function refreshModels() {
-//   try {
-//     const res = await fetch("/models", { method: "GET" });
-//     const raw = await res.json();
-//     let models = Array.isArray(raw) ? raw : raw?.models || [];
-
-//     // Normalize to objects {id, label}
-//     models = models.map((m) => {
-//       if (typeof m === "string") return { id: m, label: m };
-//       const id = m.id ?? m.model_id ?? m.name ?? "";
-//       const label = m.name ?? m.label ?? m.id ?? id ?? "model";
-//       return { id, label };
-//     });
-
-//     const modelSelectors = [
-//       "modelSelector",          // evaluation model selector
-//       "predictModelSelector",   // prediction model selector
-//       "deployModelSelector",    // optional deploy selector
-//       "downloadModelSelector",  // download selector
-//     ];
-
-//     modelSelectors.forEach((id) => {
-//       const sel = document.getElementById(id);
-//       if (!sel) return;
-//       sel.innerHTML = '<option value="">Select a model</option>';
-//       models.forEach((m) => {
-//         const opt = document.createElement("option");
-//         opt.value = m.id;
-//         opt.textContent = m.label;
-//         sel.appendChild(opt);
-//       });
-//     });
-
-//     if (models.length && !currentModel) currentModel = models[0].id;
-//   } catch (err) {
-//     console.error("Error fetching models:", err);
-//   }
-// }
 
 // =============================
 // Dropdown Refreshers
@@ -180,6 +91,7 @@ async function refreshDatasets() {
             const container = document.getElementById("dropColumnsContainer");
             if (container) container.innerHTML = "<p class='has-text-grey'>Select a dataset to load columns...</p>";
           }
+
         });
       }
     });
@@ -188,6 +100,16 @@ async function refreshDatasets() {
   } catch (err) {
     console.error("Error fetching datasets:", err);
   }
+}
+
+// Collect excluded columns into an array
+// function getExcludedColumns() {
+//   const tags = document.querySelectorAll("#dropColumnsContainer .tag.is-excluded");
+//   return Array.from(tags).map((t) => t.dataset.column);
+// }
+function getExcludedColumns() {
+  const checkboxes = document.querySelectorAll('#dropColumnsContainer input[name="drop_columns"]:checked');
+  return Array.from(checkboxes).map(cb => cb.value);
 }
 
 /**
@@ -629,7 +551,61 @@ function displayEDAResults(data, analysisType) {
       <div class="pairplot-container">
         <img src="${data.image}" alt="Pairplot" class="responsive-image">
       </div>`;
-  }
+  
+  } else if (analysisType === "duplicates") {
+    html += `
+      <h3 class="section-title">Duplicate Rows Analysis</h3>
+      <p><strong>Total Rows:</strong> ${data.total_rows}</p>
+      <p><strong>Duplicate Rows:</strong> ${data.duplicates}</p>
+      <p><strong>Percentage:</strong> ${Number(data.percentage).toFixed(2)}%</p>
+    `;
+  } else if (analysisType === "imbalance") {
+    html += `
+      <h3 class="section-title">Class Imbalance Check</h3>
+      <p><strong>Target Column:</strong> ${data.target_column}</p>
+      <div class="eda-table-container">
+        <table class="stats-table">
+          <thead>
+            <tr><th>Class</th><th>Count</th></tr>
+          </thead>
+          <tbody>
+            ${Object.keys(data.class_distribution || {})
+              .map(
+                (cls) => `<tr>
+                  <td><strong>${cls}</strong></td>
+                  <td>${data.class_distribution[cls]}</td>
+                </tr>`
+              )
+              .join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+  } else if (analysisType === "skewness") {
+    html += `
+      <h3 class="section-title">Skewness / Box-Cox Check</h3>
+      <div class="eda-table-container">
+        <table class="stats-table">
+          <thead>
+            <tr><th>Column</th><th>Skewness</th><th>Box-Cox Applicable?</th></tr>
+          </thead>
+          <tbody>
+            ${(data.columns || [])
+              .map((c) => {
+                const s = data.skewness?.[c];
+                if (!s) return "";
+                return `<tr>
+                  <td><strong>${c}</strong></td>
+                  <td>${Number(s.skewness).toFixed(4)}</td>
+                  <td>${s.boxcox_applicable ? "Yes" : "No"}</td>
+                </tr>`;
+              })
+              .join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+    }      
 
   edaResult.innerHTML = html;
 }
@@ -637,39 +613,86 @@ function displayEDAResults(data, analysisType) {
 // =============================
 // Dashboard Stats (mock fallback)
 // =============================
-async function refreshStats() {
-  try {
-    const res = await fetch("/stats", { method: "GET" });
-    if (res.ok) {
-      const s = await res.json();
-      document.getElementById("dataset-count")?.append?.();
-      if (s) {
-        const ids = [
-          ["dataset-count", s.datasets],
-          ["model-count", s.models],
-          ["process-count", s.processes],
-          ["prediction-count", s.predictions],
-        ];
-        ids.forEach(([id, val]) => {
-          const el = document.getElementById(id);
-          if (el && typeof val !== "undefined") el.textContent = val;
-        });
-        return;
-      }
-    }
-  } catch {
-    // fall through to mock
-  }
-  // Mock values
-  const setRand = (id, max) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = Math.floor(Math.random() * max) + 1;
-  };
-  setRand("dataset-count", 10);
-  setRand("model-count", 5);
-  setRand("process-count", 8);
-  setRand("prediction-count", 20);
-}
+// async function refreshStats() {
+//   try {
+//     const res = await fetch("/stats", { method: "GET" });
+//     if (res.ok) {
+//       const s = await res.json();
+//       if (s) {
+//         const ids = [
+//           ["dataset-count", s.datasets],
+//           ["model-count", s.models],
+//           ["process-count", s.processes],
+//           ["prediction-count", s.predictions],
+//         ];
+//         ids.forEach(([id, val]) => {
+//           const el = document.getElementById(id);
+//           if (el && typeof val !== "undefined") {
+//             el.textContent = val;
+//           }
+//         });
+//         return;
+//       }
+//     }
+//   } catch (err) {
+//     console.error("Error fetching stats:", err);
+//   }
+
+fetch("/stats")
+  .then(response => response.json())
+  .then(data => {
+    // Sidebar
+    document.getElementById("sidebar-datasets-count").textContent = `(${data.datasets || 0})`;
+    document.getElementById("sidebar-models-count").textContent = `(${data.models || 0})`;
+
+    // Stat cards
+    document.getElementById("card-datasets-count").textContent = data.datasets || 0;
+    document.getElementById("card-models-count").textContent = data.models || 0;
+    document.getElementById("card-process-count").textContent = data.processes || 0;
+    document.getElementById("card-prediction-count").textContent = data.predictions || 0;
+  });
+
+
+  // fallback values
+  // ["dataset-count", "model-count", "process-count", "prediction-count"].forEach(id => {
+  //   const el = document.getElementById(id);
+  //   if (el) el.textContent = "0";
+  // });
+// }
+
+// async function refreshStats() {
+//   try {
+//     const res = await fetch("/stats", { method: "GET" });
+//     if (res.ok) {
+//       const s = await res.json();
+//       document.getElementById("dataset-count")?.append?.();
+//       if (s) {
+//         const ids = [
+//           ["dataset-count", s.datasets],
+//           ["model-count", s.models],
+//           ["process-count", s.processes],
+//           ["prediction-count", s.predictions],
+//         ];
+//         ids.forEach(([id, val]) => {
+//           const el = document.getElementById(id);
+//           if (el && typeof val !== "undefined") el.textContent = val;
+//         });
+//         return;
+//       }
+//     }
+//   } catch {
+//     // fall through to mock
+//   }
+//   // Mock values
+//   const setRand = (id, max) => {
+//     const el = document.getElementById(id);
+//     if (el) el.textContent = Math.floor(Math.random() * max) + 0;
+//   };
+//   setRand("dataset-count", 0);
+//   setRand("model-count", 0);
+//   setRand("process-count", 0);
+//   setRand("prediction-count", 0);
+// }
 
 // =============================
 // Module Reset
@@ -711,6 +734,22 @@ function resetModule(moduleId) {
 // =============================
 // DOMContentLoaded - Wire Up UI
 // =============================
+// // --- Tab Switching (Upload Module)
+// document.querySelectorAll('#upload .tabs ul li').forEach(tab => {
+//   tab.addEventListener('click', () => {
+//     // remove is-active from all tabs
+//     document.querySelectorAll('#upload .tabs ul li').forEach(t => t.classList.remove('is-active'));
+//     // hide all tab-content
+//     document.querySelectorAll('#upload .tab-content').forEach(c => c.classList.add('is-hidden'));
+
+//     // activate clicked tab
+//     tab.classList.add('is-active');
+//     const target = tab.getAttribute('data-tab');
+//     document.getElementById(`tab-${target}`).classList.remove('is-hidden');
+//   });
+// });
+
+
 document.addEventListener("DOMContentLoaded", () => {
   // Tabs (data-tab -> content id)
   const tabs = document.querySelectorAll(".tabs li");
@@ -728,6 +767,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
   });
+  
 
   // File input name display
   const fileInput = document.querySelector("#fileInput");
@@ -795,36 +835,174 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // --- Upload Dataset
-  const uploadForm = document.getElementById("uploadForm");
-  if (uploadForm) {
-    uploadForm.onsubmit = async (e) => {
-      e.preventDefault();
-      showProgress();
-      try {
-        const formData = new FormData(uploadForm);
+//   // --- Upload Dataset
 
-        // add custom dataset name if provided
-        const datasetNameEl = document.getElementById("datasetName");
-        if (datasetNameEl && datasetNameEl.value) {
-          formData.append("name", datasetNameEl.value);
-        }
+// --- Upload Handler
+const uploadButton = document.getElementById("uploadButton");
+if (uploadButton) {
+  uploadButton.addEventListener("click", async () => {
+    const activeTab = document.querySelector("#upload .tabs li.is-active").dataset.tab;
+    const datasetName = document.getElementById("datasetName").value;
+    let formData = new FormData();
 
-        const res = await fetch("/upload", { method: "POST", body: formData });
-        const data = await res.json();
-        setJSON(document.getElementById("uploadResult"), data);
-      } catch (err) {
-        console.error("Upload error:", err);
-        setJSON(document.getElementById("uploadResult"), {
-          error: "Upload failed.",
-        });
-      } finally {
-        hideProgress();
-        await refreshAllDropdowns();
-        refreshStats();
+    if (activeTab === "local") {
+      const fileInput = document.getElementById("fileInput");
+      if (!fileInput.files.length) {
+        alert("Please select a file");
+        return;
       }
-    };
+      formData.append("file", fileInput.files[0]);
+      if (datasetName) formData.append("name", datasetName);
+
+      await sendUpload("/upload", formData);
+
+    } else if (activeTab === "url") {
+      const url = document.getElementById("datasetUrl").value;
+      if (!url) {
+        alert("Please enter a dataset URL");
+        return;
+      }
+      await sendUpload("/upload/url", JSON.stringify({ url, name: datasetName }), "json");
+
+    } else if (activeTab === "cloud") {
+      // Example: Choose Google Drive for now
+      const source = document.querySelector("#cloudSource").value; // dropdown select
+      const url = document.querySelector("#cloudUrl").value;
+      const datasetName = document.getElementById("datasetName").value;
+
+      const res = await fetch("/upload/cloud", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source, url, name: datasetName }),
+      });
+      data = await res.json();
+    }
+  });
+}
+
+// helper for uploads
+async function sendUpload(endpoint, data, type = "form") {
+  showProgress();
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      body: type === "form" ? data : data,
+      headers: type === "json" ? { "Content-Type": "application/json" } : undefined
+    });
+
+    const result = await res.json();
+    setJSON(document.getElementById("uploadResult"), result);
+    await refreshAllDropdowns();
+    // refreshStats();
+  } catch (err) {
+    console.error("Upload failed", err);
+    setJSON(document.getElementById("uploadResult"), { error: "Upload failed" });
+  } finally {
+    hideProgress();
   }
+}
+
+
+
+//   const uploadForm = document.getElementById("uploadForm");
+//   if (uploadForm) {
+//     uploadForm.onsubmit = async (e) => {
+//       e.preventDefault();
+//       showProgress();
+//       try {
+//         const formData = new FormData(uploadForm);
+
+//         // add custom dataset name if provided
+//         const datasetNameEl = document.getElementById("datasetName");
+//         if (datasetNameEl && datasetNameEl.value) {
+//           formData.append("name", datasetNameEl.value);
+//         }
+
+//         const res = await fetch("/upload", { method: "POST", body: formData });
+//         const data = await res.json();
+//         setJSON(document.getElementById("uploadResult"), data);
+//       } catch (err) {
+//         console.error("Upload error:", err);
+//         setJSON(document.getElementById("uploadResult"), {
+//           error: "Upload failed.",
+//         });
+//       } finally {
+//         hideProgress();
+//         await refreshAllDropdowns();
+//         refreshStats();
+//       }
+//     };
+//   }
+
+//   // --- Upload Dataset from URL
+// const urlUploadForm = document.getElementById("urlUploadForm");
+// if (urlUploadForm) {
+//   urlUploadForm.onsubmit = async (e) => {
+//     e.preventDefault();
+//     showProgress();
+//     try {
+//       const url = document.getElementById("datasetUrl").value;
+//       const res = await fetch("/upload/url", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ url }),
+//       });
+
+//       const data = await res.json();
+//       setJSON(document.getElementById("uploadResult"), data);
+//     } catch (err) {
+//       console.error("URL upload error:", err);
+//       setJSON(document.getElementById("uploadResult"), {
+//         error: "URL upload failed.",
+//       });
+//     } finally {
+//       hideProgress();
+//       await refreshAllDropdowns();
+//       refreshStats();
+//     }
+//   };
+// }
+
+// // --- Cloud Upload (Google Drive, Dropbox, S3)
+// async function uploadFromCloud(source, url) {
+//   showProgress();
+//   try {
+//     const res = await fetch("/upload/cloud", {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({ source, url }),
+//     });
+
+//     const data = await res.json();
+//     setJSON(document.getElementById("uploadResult"), data);
+//   } catch (err) {
+//     console.error("Cloud upload error:", err);
+//     setJSON(document.getElementById("uploadResult"), {
+//       error: `Failed to import from ${source}.`,
+//     });
+//   } finally {
+//     hideProgress();
+//     await refreshAllDropdowns();
+//     refreshStats();
+//   }
+// }
+
+// // Example triggers (assuming you let users paste the file link)
+// document.getElementById("btn-gdrive")?.addEventListener("click", () => {
+//   const url = prompt("Paste Google Drive file link:");
+//   if (url) uploadFromCloud("gdrive", url);
+// });
+
+// document.getElementById("btn-dropbox")?.addEventListener("click", () => {
+//   const url = prompt("Paste Dropbox file link:");
+//   if (url) uploadFromCloud("dropbox", url);
+// });
+
+// document.getElementById("btn-s3")?.addEventListener("click", () => {
+//   const url = prompt("Paste S3 file link:");
+//   if (url) uploadFromCloud("s3", url);
+// });
+
 
 // --- Preprocess
 const preprocessButton = document.getElementById("preprocessButton");
@@ -842,6 +1020,11 @@ if (preprocessButton) {
 
       // Collect preprocessing options
       const body = {
+        // Duplicates
+        duplicate_handling: document.querySelector('select[name="duplicate_handling"]')?.value || "none",
+
+        drop_columns: getExcludedColumns(),
+
         // Missing values
         missing_strategy: document.querySelector('select[name="missing_strategy"]')?.value || "none",
         missing_columns: Array.from(document.querySelectorAll('input[name="missing_columns"]:checked')).map(el => el.value),
@@ -851,6 +1034,10 @@ if (preprocessButton) {
         outlier_method: document.querySelector('select[name="outlier_method"]')?.value || "none",
         outlier_columns: Array.from(document.querySelectorAll('input[name="outlier_columns"]:checked')).map(el => el.value),
         transform_method: document.querySelector('select[name="transform_method"]')?.value || "none",
+
+        // Skewness
+        skewness_method: document.querySelector('select[name="skewness_method"]')?.value || "none",
+        skewness_columns: Array.from(document.querySelectorAll('input[name="skewness_columns"]:checked')).map(el => el.value),
 
         // Encoding
         encoding_method: document.querySelector('select[name="encoding_method"]')?.value || "none",
@@ -865,6 +1052,7 @@ if (preprocessButton) {
         imbalance_method: document.querySelector('select[name="imbalance_method"]')?.value || "none",
         random_state: 42
       };
+
 
       // Send to backend
       const res = await fetch(`/preprocess/${encodeURIComponent(dataset)}`, {
@@ -1140,7 +1328,7 @@ if (preprocessButton) {
   // Initial load
   (async () => {
     await refreshAllDropdowns();
-    refreshStats();
+    // refreshStats();
     toggleInputFormat(); // set initial visibility if present
   })();
 });
